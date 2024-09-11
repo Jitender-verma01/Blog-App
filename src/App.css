@@ -1,23 +1,23 @@
 #root {
-  max-width: 1380px;
+  max-width: 1680px;
   margin: 0 auto;
   padding: 0rem;
   text-align: center;
 }
+.logo-container {
+  display: inline-block; /* Ensure the container fits the icon size */
+}
 
+.logo-icon {
+  transition: transform 0.3s ease, color 0.3s ease; /* Smooth transition for hover effects */
+  color: #333; /* Default color of the icon */
+}
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+.logo-icon:hover {
+  color: #007bff; /* Change color on hover */
+  transform: scale(1.1); /* Slightly increase the size of the icon */
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
+
 
 @keyframes logo-spin {
   from {

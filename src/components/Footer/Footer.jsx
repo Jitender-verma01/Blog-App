@@ -82,7 +82,7 @@ function Footer() {
             </div>
             <div>
               <p className="text-sm text-gray-900">
-                &copy; Copyright 2024. All Rights Reserved.
+                <b>&copy; Copyright 2024. All Rights Reserved.</b>
               </p>
             </div>
           </div>

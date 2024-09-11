@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button, Input, RTE, Select } from "..";
 import service from "../../appwrite/config";
@@ -6,12 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 export default function PostForm({ post }) {
-    const { register, handleSubmit, watch, setValue, control, getValues, formState: {errors} } = useForm({
+    const { register, handleSubmit, watch, setValue, control, getValues, formState: { errors } } = useForm({
         defaultValues: {
             title: post?.title || "",
-            slug: post?.$id || "",
+            slug: post?.slug || "",
             content: post?.content || "",
-            status: post?.status || "active", 
+            status: post?.status || "active",
+            featuredimage: null // Initialize featuredimage as null
         },
     });
 
@@ -21,36 +22,34 @@ export default function PostForm({ post }) {
     const submit = async (data) => {
         try {
             let dbPost;
+            let fileId = post ? post.featuredimage : null; // Use existing image ID if updating
 
-            if (post) {
-                // Handle image upload if a new image is provided
-                const file = data.featuredimage?.length ? await service.uploadFile(data.image[0]) : null;
-                if (file) {
-                    await service.deleteFile(post.featuredimage);
+            if (data.featuredimage && data.featuredimage.length > 0) {
+                // Handle file upload
+                const file = await service.uploadFile(data.featuredimage[0]);
+                if (post && fileId) {
+                    await service.deleteFile(fileId); // Remove old file if updating
                 }
+                fileId = file.$id;
+            } else if (!post) {
+                // If creating a new post, a featured image is required
+                return;
+            }
 
-                // Update the article
+            // Create or update the post
+            if (post) {
                 dbPost = await service.updatePost(post.$id, {
                     ...data,
-                    Image: file ? file.$id : post.featuredimage,
+                    featuredimage: fileId || post.featuredimage,
                 });
             } else {
-                if (!data.featuredimage || !data.featuredimage.length) {
-                    return;
-                }
-                // Handle new article creation
-                const file = await service.uploadFile(data.featuredimage[0]);
-                if (file) {
-                    const fileId = file.$id;
-                    data.featuredimage = fileId;
-
-                    dbPost = await service.createPost({
-                        ...data,
-                        userid: userData.$id,
-                    });
-                    console.log("MY POST ",dbPost);
-                }
+                dbPost = await service.createPost({
+                    ...data,
+                    userid: userData.$id,
+                    featuredimage: fileId,
+                });
             }
+
             if (dbPost) {
                 navigate(`/post/${dbPost.$id}`);
             }
@@ -59,25 +58,23 @@ export default function PostForm({ post }) {
         }
     };
 
-
     const slugTransform = useCallback((value) => {
-        if (value && typeof value === "string")
+        if (value && typeof value === "string") {
             return value
                 .trim()
                 .toLowerCase()
                 .replace(/[^a-zA-Z\d\s]+/g, "-")
-                .replace(/\s/g, "-");
-
+                .replace(/\s+/g, "-");
+        }
         return "";
     }, []);
 
-    React.useEffect(() => {
+    useEffect(() => {
         const subscription = watch((value, { name }) => {
             if (name === "title") {
                 setValue("slug", slugTransform(value.title), { shouldValidate: true });
             }
         });
-
         return () => subscription.unsubscribe();
     }, [watch, slugTransform, setValue]);
 
@@ -107,12 +104,12 @@ export default function PostForm({ post }) {
                     type="file"
                     className="mb-4"
                     accept="image/png, image/jpg, image/jpeg, image/gif"
-                    {...register("featuredimage", { required: !post })}
+                    {...register("featuredimage")}
                 />
-                {post && (
+                {post && post.featuredimage && (
                     <div className="w-full mb-4">
                         <img
-                            src={appwriteService.getFilePreview(post.featuredImage)}
+                            src={service.getFilePreview(post.featuredimage)}
                             alt={post.title}
                             className="rounded-lg"
                         />
@@ -128,9 +125,9 @@ export default function PostForm({ post }) {
                     {post ? "Update" : "Submit"}
                 </Button>
             </div>
-                {errors.image && <p className='text-red-600 font-bold mt-8 text-center'>Image is required for the first post.</p>}
-                {errors.title && <p className='text-red-600 font-bold mt-8 text-center'>Title is required.</p>}
-                {errors.content && <p className='text-red-600 font-bold mt-8 text-center'>Content is required.</p>}
+            {errors.featuredimage && !post && <p className='text-red-600 font-bold mt-8 text-center'>Featured Image is required for new posts.</p>}
+            {errors.title && <p className='text-red-600 font-bold mt-8 text-center'>Title is required.</p>}
+            {errors.content && <p className='text-red-600 font-bold mt-8 text-center'>Content is required.</p>}
         </form>
     );
 }
