@@ -7,7 +7,7 @@ function Logo({ width = '100px' }) {
       {/* <FontAwesomeIcon height='250px' width={width} icon={faBlog} /> */}
       <FontAwesomeIcon 
         icon={faBlog} 
-        style={{ height: '50px', width: width }} 
+        className='logo-icon h-[50px]' 
       />
     </div>
   );
