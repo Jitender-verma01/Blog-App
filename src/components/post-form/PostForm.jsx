@@ -23,6 +23,7 @@ export default function PostForm({ post }) {
         try {
             let dbPost;
             let fileId = post ? post.featuredimage : null; // Use existing image ID if updating
+            alert("Please wait for a sec......")
 
             if (data.featuredimage && data.featuredimage.length > 0) {
                 // Handle file upload
